@@ -1,4 +1,4 @@
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { query } from '../config/db.js';
 import { User, UserProfile } from '../types/index.js';
 

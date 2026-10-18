@@ -34,9 +34,11 @@ if (env.NODE_ENV === 'production') {
   });
 }
 
-// Helmet with Content-Security-Policy
+// Helmet with Content-Security-Policy (with ESM/CJS interop for TypeScript 5.9+)
+const helmetMiddleware = ((helmet as any)?.default || helmet) as (options?: any) => any;
+
 app.use(
-  helmet({
+  helmetMiddleware({
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
@@ -50,6 +52,7 @@ app.use(
     hsts: env.NODE_ENV === 'production' ? { maxAge: 31536000, includeSubDomains: true } : false,
   })
 );
+
 
 // Strict CORS setup
 app.use(
