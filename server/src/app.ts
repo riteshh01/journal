@@ -68,14 +68,16 @@ app.use(
 app.use(globalLimiter);
 
 // Cookie parsing
-app.use(cookieParser());
+const cookieParserMiddleware = ((cookieParser as any)?.default || cookieParser) as (options?: any) => any;
+app.use(cookieParserMiddleware());
 
 // Limit JSON payload size to 100kb
 app.use(express.json({ limit: '100kb' }));
 app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 
 // Prevent HTTP Parameter Pollution
-app.use(hpp());
+const hppMiddleware = ((hpp as any)?.default || hpp) as (options?: any) => any;
+app.use(hppMiddleware());
 
 // CSRF Defense for state-changing operations via custom header verification
 app.use((req: Request, res: Response, next: NextFunction): void => {
