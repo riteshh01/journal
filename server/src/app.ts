@@ -16,6 +16,10 @@ import goalsRoutes from './routes/goals.routes.js';
 import mediaRoutes from './routes/media.routes.js';
 import dashboardRoutes from './routes/dashboard.routes.js';
 import codingRoutes from './routes/coding.routes.js';
+import { AuthService } from './services/auth.service.js';
+
+// Sync configured environment seed credentials if present
+AuthService.syncSeedUser().catch((err) => console.error('[Startup] Failed to sync seed user:', err));
 
 const app = express();
 

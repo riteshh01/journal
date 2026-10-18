@@ -18,6 +18,7 @@ export class AuthController {
 
       sendSuccess(res, { user });
     } catch (error: any) {
+      console.warn('[AuthController.login error]', error?.message || error);
       // Generic invalid credentials message
       sendError(res, 'Invalid credentials', 'INVALID_CREDENTIALS', 401);
     }

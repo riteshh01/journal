@@ -16,7 +16,9 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
+    const cleanEmail = email.trim();
+    const cleanPassword = password.trim();
+    if (!cleanEmail || !cleanPassword) {
       setError('Please provide both email and password.');
       return;
     }
@@ -25,7 +27,7 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      await login(email, password);
+      await login(cleanEmail, cleanPassword);
     } catch (err: any) {
       setError(err.message || 'Invalid credentials');
     } finally {
