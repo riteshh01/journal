@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #FFFFFF;
+  --surface: #F5F5F5;
+  --surface-hover: #EDEDED;
+  --text: #111111;
+  --text-muted: #666666;
+  --border: #E2E2E2;
+  --accent: #2563EB;
+  --accent-hover: #1D4ED8;
+  --accent-contrast: #FFFFFF;
+
+  /* TimeFlies split-flap board theme (Light: Authentic Vintage Enamel) */
+  --tf-paper: #dfe4e1;
+  --tf-ink: #13233a;
+  --tf-chalk: #f2efe4;
+  --tf-signal: #e4491c;
+  --tf-flap-bg: #13233a;
+  --tf-border: #13233a;
+}
+
+.dark {
+  --background: #111111;
+  --surface: #1A1A1A;
+  --surface-hover: #242424;
+  --text: #F2F2F2;
+  --text-muted: #999999;
+  --border: #2E2E2E;
+  --accent: #60A5FA;
+  --accent-hover: #3B82F6;
+  --accent-contrast: #111111;
+
+  /* TimeFlies split-flap board theme (Dark: Terminal Departure Board) */
+  --tf-paper: #161f2e;
+  --tf-ink: #cbd5e1;
+  --tf-chalk: #f8fafc;
+  --tf-signal: #f97316;
+  --tf-flap-bg: #0b1320;
+  --tf-border: #334155;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Accessible focus ring across all interactive elements */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Custom scrollbar matching minimal solid theme */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--surface);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
