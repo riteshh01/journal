@@ -19,6 +19,7 @@ import { ThemeToggle } from './ThemeToggle';
 import { RefreshButton } from './RefreshButton';
 import { Button } from '../ui/Button';
 import { cn } from '../../lib/utils';
+import { lockScroll, unlockScroll } from '../../lib/scrollLock';
 
 export function Navbar() {
   const pathname = usePathname();
@@ -56,13 +57,12 @@ export function Navbar() {
 
   // Lock body scroll when mobile drawer is open
   useEffect(() => {
-    if (mobileOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
+    if (!mobileOpen) return;
+
+    lockScroll();
+
     return () => {
-      document.body.style.overflow = '';
+      unlockScroll();
     };
   }, [mobileOpen]);
 

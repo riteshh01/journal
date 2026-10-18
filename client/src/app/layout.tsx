@@ -1,11 +1,20 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { ThemeProvider } from '../hooks/useTheme';
 import { AuthProvider } from '../hooks/useAuth';
+import { ViewportScrollRestoration } from '../components/layout/ViewportScrollRestoration';
 
 export const metadata: Metadata = {
   title: 'Personal Journal & Life Dashboard',
   description: 'Private single-user life dashboard, journal, goals, coding profiles, and media manager.',
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  interactiveWidget: 'resizes-visual',
 };
 
 export default function RootLayout({
@@ -33,6 +42,7 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-background text-text transition-colors duration-150 antialiased min-h-screen">
+        <ViewportScrollRestoration />
         <ThemeProvider>
           <AuthProvider>{children}</AuthProvider>
         </ThemeProvider>

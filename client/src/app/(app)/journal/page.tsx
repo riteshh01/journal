@@ -116,7 +116,7 @@ export default function JournalPage() {
                   placeholder="Search entries..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="py-1 text-xs"
+                  className="py-1 text-base sm:text-xs"
                 />
               </div>
             </div>

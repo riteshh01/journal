@@ -387,7 +387,7 @@ export default function GoalsPage() {
               <select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as PriorityLevel)}
-                className="w-full px-3 py-2 text-sm bg-background text-text border border-border rounded-md focus:outline-none focus:border-accent"
+                className="w-full px-3 py-2 text-base sm:text-sm bg-background text-text border border-border rounded-md focus:outline-none focus:border-accent"
               >
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
@@ -402,7 +402,7 @@ export default function GoalsPage() {
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value as GoalStatus)}
-                className="w-full px-3 py-2 text-sm bg-background text-text border border-border rounded-md focus:outline-none focus:border-accent"
+                className="w-full px-3 py-2 text-base sm:text-sm bg-background text-text border border-border rounded-md focus:outline-none focus:border-accent"
               >
                 <option value="active">Active</option>
                 <option value="completed">Completed</option>

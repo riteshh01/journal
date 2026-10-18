@@ -415,7 +415,7 @@ export default function JournalDateEntryPage() {
                     handleAddTask(e);
                   }
                 }}
-                className="text-xs flex-1"
+                className="text-base sm:text-xs flex-1"
               />
               <Button
                 type="button"

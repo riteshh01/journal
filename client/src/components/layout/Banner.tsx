@@ -67,7 +67,7 @@ export function Banner() {
                   onChange={(e) => setMottoText(e.target.value)}
                   placeholder="Set your daily motto or personal statement..."
                   maxLength={255}
-                  className="flex-1 px-3 py-1.5 text-sm bg-background border border-border rounded-md text-text focus:outline-none focus:border-accent"
+                  className="flex-1 px-3 py-1.5 text-base sm:text-sm bg-background border border-border rounded-md text-text focus:outline-none focus:border-accent"
                   autoFocus
                 />
                 <div className="flex items-center gap-1.5">

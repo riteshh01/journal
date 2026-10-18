@@ -4,6 +4,7 @@ import React, { useEffect, useCallback } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from './Button';
+import { lockScroll, unlockScroll } from '../../lib/scrollLock';
 
 interface ModalProps {
   isOpen: boolean;
@@ -34,14 +35,13 @@ export function Modal({
   );
 
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-      window.addEventListener('keydown', handleKeyDown);
-    } else {
-      document.body.style.overflow = 'unset';
-    }
+    if (!isOpen) return;
+
+    lockScroll();
+    window.addEventListener('keydown', handleKeyDown);
+
     return () => {
-      document.body.style.overflow = 'unset';
+      unlockScroll();
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen, handleKeyDown]);
