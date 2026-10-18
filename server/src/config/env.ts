@@ -26,9 +26,36 @@ const envSchema = z.object({
 
 const parsedEnv = envSchema.safeParse(process.env);
 
+let envData: z.infer<typeof envSchema>;
+
 if (!parsedEnv.success) {
-  console.error('Environment validation error:', JSON.stringify(parsedEnv.error.format(), null, 2));
-  process.exit(1);
+  const errorDetails = JSON.stringify(parsedEnv.error.format(), null, 2);
+  console.error('Environment validation error:', errorDetails);
+
+  if (process.env.VERCEL !== '1') {
+    process.exit(1);
+  }
+
+  // Fallback structure on Vercel so Express can initialize and report the exact missing variables
+  envData = {
+    NODE_ENV: (process.env.NODE_ENV as any) || 'production',
+    PORT: Number(process.env.PORT) || 5001,
+    CLIENT_URL: process.env.CLIENT_URL || 'http://localhost:3000',
+    DATABASE_URL: process.env.DATABASE_URL || '',
+    JWT_SECRET: process.env.JWT_SECRET || 'temporary_jwt_secret_32chars_long_placeholder!',
+    JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET || 'temporary_refresh_secret_32chars_long_placeholder!',
+    COOKIE_DOMAIN: process.env.COOKIE_DOMAIN || 'localhost',
+    CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME || '',
+    CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY || '',
+    CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET || '',
+    SEED_USER_EMAIL: process.env.SEED_USER_EMAIL,
+    SEED_USER_PASSWORD: process.env.SEED_USER_PASSWORD,
+    SEED_USER_NAME: process.env.SEED_USER_NAME,
+  };
+} else {
+  envData = parsedEnv.data;
 }
 
-export const env = parsedEnv.data;
+export const env = envData;
+export const envValidationError = parsedEnv.success ? null : parsedEnv.error.format();
+

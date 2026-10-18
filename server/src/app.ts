@@ -3,7 +3,7 @@ import helmet from 'helmet';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import hpp from 'hpp';
-import { env } from './config/env.js';
+import { env, envValidationError } from './config/env.js';
 import { globalLimiter } from './middleware/rateLimiter.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { sendError } from './utils/response.js';
@@ -95,17 +95,33 @@ app.use((req: Request, res: Response, next: NextFunction): void => {
 
 // Root server status endpoints
 app.get('/', (_req: Request, res: Response) => {
+  if (envValidationError) {
+    const missingKeys = Object.keys(envValidationError).filter((k) => k !== '_errors');
+    res.status(200).send(`Server is running (Warning: missing environment variables in Vercel: ${missingKeys.join(', ')})`);
+    return;
+  }
   res.status(200).send('Server is running');
 });
 
 app.get('/api', (_req: Request, res: Response) => {
+  if (envValidationError) {
+    const missingKeys = Object.keys(envValidationError).filter((k) => k !== '_errors');
+    res.status(200).send(`Server is running (Warning: missing environment variables in Vercel: ${missingKeys.join(', ')})`);
+    return;
+  }
   res.status(200).send('Server is running');
 });
 
 // Health check endpoint
 app.get('/api/health', (_req: Request, res: Response) => {
-  res.status(200).json({ status: 'ok', message: 'Server is running', timestamp: new Date().toISOString() });
+  res.status(200).json({
+    status: envValidationError ? 'warning' : 'ok',
+    message: 'Server is running',
+    environmentValidation: envValidationError || 'passed',
+    timestamp: new Date().toISOString(),
+  });
 });
+
 
 
 // Mount application API routes
