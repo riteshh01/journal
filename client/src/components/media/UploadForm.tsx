@@ -9,11 +9,17 @@ import { MediaType, Media } from '../../types';
 
 interface UploadFormProps {
   mediaType: MediaType;
-  onUploadSuccess: (media: Media) => void;
+  onStartUpload?: (file: File, caption: string, takenOn: string) => void;
+  onUploadSuccess?: (media: Media) => void;
   onCancel?: () => void;
 }
 
-export function UploadForm({ mediaType, onUploadSuccess, onCancel }: UploadFormProps) {
+export function UploadForm({
+  mediaType,
+  onStartUpload,
+  onUploadSuccess,
+  onCancel,
+}: UploadFormProps) {
   const [file, setFile] = useState<File | null>(null);
   const [caption, setCaption] = useState('');
   const [takenOn, setTakenOn] = useState('');
@@ -45,6 +51,18 @@ export function UploadForm({ mediaType, onUploadSuccess, onCancel }: UploadFormP
       return;
     }
 
+    // Optimistic background upload: dispatch immediately to parent
+    if (onStartUpload) {
+      onStartUpload(file, caption.trim(), takenOn);
+      setFile(null);
+      setCaption('');
+      setTakenOn('');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      return;
+    }
+
     setUploading(true);
     setError(null);
 
@@ -65,7 +83,7 @@ export function UploadForm({ mediaType, onUploadSuccess, onCancel }: UploadFormP
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
-      onUploadSuccess(res.media);
+      onUploadSuccess?.(res.media);
     } catch (err: any) {
       setError(err.message || 'Upload failed');
     } finally {

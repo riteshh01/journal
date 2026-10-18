@@ -17,11 +17,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background text-text">
+    <div className="min-h-screen bg-background text-text flex flex-col">
+      {/* Top Navbar with Desktop horizontal menu & Mobile slide-out sidebar drawer */}
       <Navbar />
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+      {/* Main Content Area */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {children}
       </main>
+
       <footer className="border-t border-border py-6 text-center text-xs text-text-muted">
         Private Journal & Life Dashboard &bull; {new Date().getFullYear()}
       </footer>

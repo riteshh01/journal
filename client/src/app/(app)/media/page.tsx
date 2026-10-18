@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { Image as ImageIcon, Film, Plus, RefreshCw, AlertCircle } from 'lucide-react';
 import { api } from '../../../lib/api';
 import { Media, MediaType } from '../../../types';
-import { MediaGrid } from '../../../components/media/MediaGrid';
+import { MediaGrid, PendingUploadItem } from '../../../components/media/MediaGrid';
 import { UploadForm } from '../../../components/media/UploadForm';
 import { Button } from '../../../components/ui/Button';
 import { Modal } from '../../../components/ui/Modal';
@@ -18,6 +18,7 @@ export default function MediaPage() {
   const [activeTab, setActiveTab] = useState<MediaType>(initialTab);
   const [images, setImages] = useState<Media[]>([]);
   const [videos, setVideos] = useState<Media[]>([]);
+  const [pendingUploads, setPendingUploads] = useState<PendingUploadItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -42,6 +43,68 @@ export default function MediaPage() {
   useEffect(() => {
     fetchMedia();
   }, [fetchMedia]);
+
+  const handleStartUpload = async (file: File, caption: string, takenOn: string) => {
+    const uploadId = `upload-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const previewUrl = URL.createObjectURL(file);
+    const targetMediaType = activeTab;
+
+    const newPending: PendingUploadItem = {
+      id: uploadId,
+      file,
+      previewUrl,
+      caption,
+      mediaType: targetMediaType,
+      status: 'uploading',
+    };
+
+    // Close modal immediately so user sees the gallery
+    setIsUploadModalOpen(false);
+
+    // Prepend to pending uploads list
+    setPendingUploads((prev) => [newPending, ...prev]);
+
+    // Perform the background upload
+    const formData = new FormData();
+    formData.append('file', file);
+    if (caption.trim()) {
+      formData.append('caption', caption.trim());
+    }
+    if (takenOn) {
+      formData.append('taken_on', takenOn);
+    }
+
+    try {
+      const res = await api.upload<{ media: Media }>('/media', formData);
+      if (res.media.media_type === 'image') {
+        setImages((prev) => [res.media, ...prev]);
+      } else {
+        setVideos((prev) => [res.media, ...prev]);
+      }
+      setPendingUploads((prev) => prev.filter((p) => p.id !== uploadId));
+      URL.revokeObjectURL(previewUrl);
+    } catch (err: any) {
+      setPendingUploads((prev) =>
+        prev.map((p) =>
+          p.id === uploadId
+            ? {
+                ...p,
+                status: 'error',
+                errorMessage: err.message || 'Upload failed',
+                onDismiss: () => {
+                  setPendingUploads((current) => current.filter((item) => item.id !== uploadId));
+                  URL.revokeObjectURL(previewUrl);
+                },
+                onRetry: () => {
+                  setPendingUploads((current) => current.filter((item) => item.id !== uploadId));
+                  handleStartUpload(file, caption, takenOn);
+                },
+              }
+            : p
+        )
+      );
+    }
+  };
 
   const handleUploadSuccess = (newMedia: Media) => {
     if (newMedia.media_type === 'image') {
@@ -171,6 +234,7 @@ export default function MediaPage() {
         <MediaGrid
           key={activeTab}
           mediaList={currentList}
+          pendingUploads={pendingUploads.filter((p) => p.mediaType === activeTab)}
           mediaType={activeTab}
           onItemDeleted={handleItemDeleted}
           onItemUpdated={handleItemUpdated}
@@ -186,6 +250,7 @@ export default function MediaPage() {
       >
         <UploadForm
           mediaType={activeTab}
+          onStartUpload={handleStartUpload}
           onUploadSuccess={handleUploadSuccess}
           onCancel={() => setIsUploadModalOpen(false)}
         />

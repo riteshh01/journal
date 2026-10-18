@@ -92,12 +92,12 @@ export function VideoPlayer({ src, poster, caption }: VideoPlayerProps) {
         onPause={() => setIsPlaying(false)}
         onTimeUpdate={onTimeUpdate}
         onLoadedMetadata={onLoadedMetadata}
-        className="w-full h-auto max-h-[70vh] object-contain cursor-pointer"
+        className="w-full h-auto max-h-[52vh] sm:max-h-[70vh] object-contain cursor-pointer"
         playsInline
       />
 
       {/* Video Control Bar */}
-      <div className="bg-surface/95 border-t border-border px-4 py-2.5 flex flex-col gap-2">
+      <div className="bg-surface/95 border-t border-border px-2.5 sm:px-4 py-2 sm:py-2.5 flex flex-col gap-1.5 sm:gap-2">
         {/* Seek Bar */}
         <input
           type="range"
@@ -109,29 +109,29 @@ export function VideoPlayer({ src, poster, caption }: VideoPlayerProps) {
           aria-label="Seek video playback"
         />
 
-        <div className="flex items-center justify-between text-xs text-text">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between text-xs text-text gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <Button
               variant="ghost"
               size="sm"
               onClick={togglePlay}
               aria-label={isPlaying ? 'Pause' : 'Play'}
-              className="p-1 text-text hover:text-accent"
+              className="p-1.5 text-text hover:text-accent touch-manipulation shrink-0"
             >
               {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
             </Button>
 
-            <span className="text-text-muted font-mono">
+            <span className="text-[11px] sm:text-xs text-text-muted font-mono shrink-0">
               {formatTime(currentTime)} / {formatTime(duration)}
             </span>
 
-            <div className="flex items-center gap-1.5 ml-2">
+            <div className="flex items-center gap-1 sm:gap-1.5 ml-1 sm:ml-2">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={toggleMute}
                 aria-label={isMuted ? 'Unmute' : 'Mute'}
-                className="p-1 text-text hover:text-accent"
+                className="p-1.5 text-text hover:text-accent touch-manipulation shrink-0"
               >
                 {isMuted || volume === 0 ? (
                   <VolumeX className="w-4 h-4" />
@@ -146,19 +146,19 @@ export function VideoPlayer({ src, poster, caption }: VideoPlayerProps) {
                 step={0.05}
                 value={isMuted ? 0 : volume}
                 onChange={handleVolumeChange}
-                className="w-16 h-1.5 bg-background rounded appearance-none cursor-pointer accent-accent"
+                className="hidden sm:block w-16 h-1.5 bg-background rounded appearance-none cursor-pointer accent-accent"
                 aria-label="Volume slider"
               />
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <Button
               variant="ghost"
               size="sm"
               onClick={toggleFullScreen}
               aria-label="Full screen"
-              className="p-1 text-text hover:text-accent"
+              className="p-1.5 text-text hover:text-accent touch-manipulation shrink-0"
             >
               <Maximize className="w-4 h-4" />
             </Button>

@@ -61,11 +61,11 @@ export function Modal({
       role="dialog"
       aria-modal="true"
       aria-labelledby={title ? 'modal-title' : undefined}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4"
     >
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/60 transition-opacity"
+        className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -73,12 +73,12 @@ export function Modal({
       {/* Modal Dialog Content */}
       <div
         className={cn(
-          'relative z-10 w-full bg-surface border border-border rounded-lg p-6 shadow-none text-text',
+          'relative z-10 w-full bg-surface border border-border rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-xl text-text max-h-[94vh] overflow-y-auto',
           maxWidths[maxWidth],
           className
         )}
       >
-        <div className="flex items-start justify-between pb-3 mb-4 border-b border-border">
+        <div className="flex items-start justify-between pb-3 mb-3 sm:mb-4 border-b border-border">
           <div>
             {title && (
               <h2 id="modal-title" className="text-base font-semibold text-text">
