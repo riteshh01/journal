@@ -93,10 +93,20 @@ app.use((req: Request, res: Response, next: NextFunction): void => {
   next();
 });
 
+// Root server status endpoints
+app.get('/', (_req: Request, res: Response) => {
+  res.status(200).send('Server is running');
+});
+
+app.get('/api', (_req: Request, res: Response) => {
+  res.status(200).send('Server is running');
+});
+
 // Health check endpoint
 app.get('/api/health', (_req: Request, res: Response) => {
-  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.status(200).json({ status: 'ok', message: 'Server is running', timestamp: new Date().toISOString() });
 });
+
 
 // Mount application API routes
 app.use('/api/auth', authRoutes);
