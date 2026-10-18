@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { ThemeToggle } from './ThemeToggle';
+import { RefreshButton } from './RefreshButton';
 import { Button } from '../ui/Button';
 import { cn } from '../../lib/utils';
 
@@ -118,8 +119,9 @@ export function Navbar() {
               </nav>
             </div>
 
-            {/* Right section: Theme Toggle & Logout on Desktop */}
-            <div className="hidden md:flex items-center gap-3">
+            {/* Right section: Theme Toggle, Refresh & Logout on Desktop */}
+            <div className="hidden md:flex items-center gap-2.5">
+              <RefreshButton />
               <ThemeToggle />
               <Button
                 variant="outline"
@@ -133,8 +135,9 @@ export function Navbar() {
               </Button>
             </div>
 
-            {/* Right section on Mobile: Theme toggle & Hamburger menu */}
-            <div className="flex md:hidden items-center gap-2">
+            {/* Right section on Mobile: Refresh, Theme toggle & Hamburger menu */}
+            <div className="flex md:hidden items-center gap-1.5 sm:gap-2">
+              <RefreshButton />
               <ThemeToggle />
               <button
                 type="button"
