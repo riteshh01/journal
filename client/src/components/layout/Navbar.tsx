@@ -90,7 +90,7 @@ export function Navbar() {
                   </span>
                   <span className="hidden sm:inline-flex text-[10px] text-text-muted uppercase tracking-wider font-semibold items-center gap-1">
                     <ShieldCheck className="w-2.5 h-2.5 text-emerald-500" />
-                    <span>Private sanctuary</span>
+                    <span>Private</span>
                   </span>
                 </div>
               </Link>

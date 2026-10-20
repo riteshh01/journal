@@ -69,7 +69,7 @@ export const api = {
         url += `${url.includes('?') ? '&' : '?'}${queryString}`;
       }
     }
-    return request<T>(url, { method: 'GET' });
+    return request<T>(url, { method: 'GET', cache: 'no-store' });
   },
 
   post: <T>(endpoint: string, body?: any) => {

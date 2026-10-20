@@ -536,35 +536,14 @@ export default function TimeFlies() {
   return (
     <section
       className={`w-full bg-surface/90 backdrop-blur-md border border-border rounded-xl p-4 sm:p-5 space-y-4 shadow-sm transition-all ${font.className}`}
-      aria-label="Temporal Velocity countdown for current Day, Month, and Year"
+      aria-label="Time countdown for current Day, Month, and Year"
     >
       {/* ========================================================================= */}
-      {/* TOP CONSOLE HEADER: Telemetry Status, Mode Switcher & Precision Clock     */}
+      {/* TOP CONSOLE HEADER: Mode Switcher [Remaining | Elapsed] & Current Time    */}
       {/* ========================================================================= */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3.5 border-b border-border/80 gap-3">
-        {/* Left: Instrument label and live beacon */}
-        <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-accent/15 border border-accent/25 text-accent flex items-center justify-center shadow-2xs">
-            <Clock className="w-4 h-4" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-bold tracking-widest uppercase text-text text-xs font-mono">
-                Temporal Velocity
-              </span>
-              <span className="relative flex h-2 w-2" title="Live chronometer active">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-              </span>
-            </div>
-            <p className="text-[10.5px] text-text-muted hidden sm:block tracking-tight">
-              Real-time life chronometer • precision tracking
-            </p>
-          </div>
-        </div>
-
-        {/* Right: Segmented Mode Switcher [Remaining | Elapsed] & Clock Capsule */}
-        <div className="flex items-center justify-between sm:justify-end gap-3">
+      <div className="flex items-center justify-between pb-3.5 border-b border-border/80 gap-3">
+        {/* Left: Mode Switcher [Remaining | Elapsed] & Current Time */}
+        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
           {/* Tactile Segmented Pill Switcher */}
           <div className="inline-flex items-center p-0.5 rounded-lg bg-background border border-border shadow-2xs">
             <button
@@ -591,9 +570,12 @@ export default function TimeFlies() {
             </button>
           </div>
 
-          {/* Live Precision Time Capsule */}
+          {/* Live Precision Current Time Capsule */}
           <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-background border border-border shadow-2xs">
-            <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+            <span className="relative flex h-2 w-2" title="Live clock active">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+            </span>
             <span className="font-mono text-text font-bold text-xs tracking-tight">
               {liveClock}
             </span>

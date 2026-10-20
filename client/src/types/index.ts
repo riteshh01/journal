@@ -97,6 +97,11 @@ export interface DashboardSummary {
     todayTasksCount?: number;
     todayTasksCompleted?: number;
   };
+  todayEntry?: {
+    id: string;
+    title: string;
+    entry_date: string;
+  } | null;
   todayTasks?: {
     id: string;
     title: string;

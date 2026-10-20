@@ -10,6 +10,7 @@ import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
 import { Input } from '../ui/Input';
 import { VideoPlayer } from './VideoPlayer';
+import { useToast } from '../ui/Toast';
 
 export interface PendingUploadItem {
   id: string;
@@ -38,6 +39,7 @@ export function MediaGrid({
   onItemDeleted,
   onItemUpdated,
 }: MediaGridProps) {
+  const toast = useToast();
   const [selectedMedia, setSelectedMedia] = useState<Media | null>(null);
   const [editingMedia, setEditingMedia] = useState<Media | null>(null);
   const [deletingMedia, setDeletingMedia] = useState<Media | null>(null);
@@ -60,8 +62,9 @@ export function MediaGrid({
       });
       onItemUpdated(res.media);
       setEditingMedia(null);
-    } catch (err) {
-      console.error('Failed to update caption:', err);
+      toast.success('Caption updated');
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to update caption');
     } finally {
       setActionLoading(false);
     }
@@ -77,8 +80,9 @@ export function MediaGrid({
       if (selectedMedia?.id === deletingMedia.id) {
         setSelectedMedia(null);
       }
-    } catch (err) {
-      console.error('Failed to delete media:', err);
+      toast.success('Media deleted');
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to delete media');
     } finally {
       setActionLoading(false);
     }

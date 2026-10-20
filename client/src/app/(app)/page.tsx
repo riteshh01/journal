@@ -3,12 +3,14 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { api } from '../../lib/api';
 import { DashboardSummary } from '../../types';
-import { Banner } from '../../components/layout/Banner';
+import { TodayJournalTasksCard } from '../../components/dashboard/TodayJournalTasksCard';
 import { DashboardCharts } from '../../components/charts/DashboardCharts';
 import { Spinner } from '../../components/ui/Spinner';
 import { Button } from '../../components/ui/Button';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import TimeFlies from '../../components/dashboard/TimeFlies';
+
+import { getTodayString } from '../../lib/utils';
 
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardSummary | null>(null);
@@ -19,7 +21,8 @@ export default function DashboardPage() {
     setLoading(true);
     setError(null);
     try {
-      const summary = await api.get<DashboardSummary>('/dashboard/summary');
+      const todayStr = getTodayString();
+      const summary = await api.get<DashboardSummary>(`/dashboard/summary?date=${todayStr}`);
       setData(summary);
     } catch (err: any) {
       setError(err.message || 'Failed to load dashboard data');
@@ -37,7 +40,14 @@ export default function DashboardPage() {
       {/* Compact Day, Month, Year Temporal Countdown */}
       <TimeFlies />
 
-      <Banner />
+      {/* Today's Journal Tasks or Urgency Prompt (Replaces Banner) */}
+      {data && (
+        <TodayJournalTasksCard
+          initialTodayEntry={data.todayEntry}
+          initialTasks={data.todayTasks}
+          onTaskChanged={fetchSummary}
+        />
+      )}
 
       {/* Loading state */}
       {loading && !data && (

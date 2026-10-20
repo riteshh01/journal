@@ -9,6 +9,11 @@ export interface DashboardSummary {
     todayTasksCount: number;
     todayTasksCompleted: number;
   };
+  todayEntry: {
+    id: string;
+    title: string;
+    entry_date: string;
+  } | null;
   todayTasks: {
     id: string;
     title: string;
@@ -45,7 +50,9 @@ export interface DashboardSummary {
 }
 
 export class DashboardService {
-  static async getSummary(userId: string): Promise<DashboardSummary> {
+  static async getSummary(userId: string, targetDate?: string): Promise<DashboardSummary> {
+    const validDate = targetDate && /^\d{4}-\d{2}-\d{2}$/.test(targetDate) ? targetDate : null;
+
     // 1. Total journal entries
     const totalEntriesRes = await query<{ count: string }>(
       'SELECT COUNT(*) FROM journal_entries WHERE user_id = $1',
@@ -58,17 +65,17 @@ export class DashboardService {
       `
       SELECT TO_CHAR(entry_date, 'YYYY-MM-DD') AS entry_date
       FROM journal_entries
-      WHERE user_id = $1 AND entry_date <= CURRENT_DATE
+      WHERE user_id = $1 AND entry_date <= COALESCE($2::DATE, CURRENT_DATE)
       ORDER BY entry_date DESC
       LIMIT 100
       `,
-      [userId]
+      [userId, validDate]
     );
 
     let currentStreak = 0;
     if (streakRes.rows.length > 0) {
       const entryDates = new Set(streakRes.rows.map((r) => r.entry_date));
-      const today = new Date();
+      const today = validDate ? new Date(validDate + 'T12:00:00Z') : new Date();
       const formatDate = (d: Date) => d.toISOString().split('T')[0];
 
       let checkDate = new Date(today);
@@ -103,7 +110,7 @@ export class DashboardService {
     const weeklyRes = await query<{ label: string; week_start: string; count: number }>(
       `
       WITH weeks AS (
-        SELECT DATE_TRUNC('week', CURRENT_DATE - (n || ' weeks')::interval)::DATE AS week_start
+        SELECT DATE_TRUNC('week', COALESCE($2::DATE, CURRENT_DATE) - (n || ' weeks')::interval)::DATE AS week_start
         FROM generate_series(7, 0, -1) AS n
       )
       SELECT
@@ -118,14 +125,14 @@ export class DashboardService {
       GROUP BY w.week_start
       ORDER BY w.week_start ASC
       `,
-      [userId]
+      [userId, validDate]
     );
 
     // 6. Mood trend (Last 30 days)
     const moodRes = await query<{ date: string; label: string; mood: number | null }>(
       `
       WITH days AS (
-        SELECT (CURRENT_DATE - (n || ' days')::interval)::DATE AS day_date
+        SELECT (COALESCE($2::DATE, CURRENT_DATE) - (n || ' days')::interval)::DATE AS day_date
         FROM generate_series(29, 0, -1) AS n
       )
       SELECT
@@ -138,7 +145,7 @@ export class DashboardService {
         AND je.entry_date = d.day_date
       ORDER BY d.day_date ASC
       `,
-      [userId]
+      [userId, validDate]
     );
 
     // 7. Goals by category
@@ -174,7 +181,28 @@ export class DashboardService {
       [userId]
     );
 
-    // 9. Today's journal tasks
+    // 9. Today's journal entry & tasks
+    const todayEntryRes = await query<{
+      id: string;
+      title: string;
+      entry_date: string;
+    }>(
+      `
+      SELECT id, title, TO_CHAR(entry_date, 'YYYY-MM-DD') AS entry_date
+      FROM journal_entries
+      WHERE user_id = $1 AND entry_date = COALESCE($2::DATE, CURRENT_DATE)
+      `,
+      [userId, validDate]
+    );
+
+    const todayEntry = todayEntryRes.rows[0]
+      ? {
+          id: todayEntryRes.rows[0].id,
+          title: todayEntryRes.rows[0].title,
+          entry_date: todayEntryRes.rows[0].entry_date,
+        }
+      : null;
+
     const todayTasksRes = await query<{
       id: string;
       title: string;
@@ -185,10 +213,10 @@ export class DashboardService {
       SELECT jt.id, jt.title, jt.is_completed, jt.created_at
       FROM journal_tasks jt
       JOIN journal_entries je ON je.id = jt.journal_entry_id
-      WHERE jt.user_id = $1 AND je.entry_date = CURRENT_DATE
+      WHERE jt.user_id = $1 AND je.entry_date = COALESCE($2::DATE, CURRENT_DATE)
       ORDER BY jt.created_at ASC
       `,
-      [userId]
+      [userId, validDate]
     );
 
     const todayTasks = todayTasksRes.rows.map((t) => ({
@@ -208,6 +236,7 @@ export class DashboardService {
         todayTasksCount: totalTodayTasks,
         todayTasksCompleted: completedTodayTasks,
       },
+      todayEntry,
       todayTasks,
       todayTasksStats: {
         total: totalTodayTasks,

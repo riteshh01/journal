@@ -22,6 +22,7 @@ import { Spinner } from '../../../components/ui/Spinner';
 import { CodingHeatmap } from '../../../components/coding/CodingHeatmap';
 import { Modal } from '../../../components/ui/Modal';
 import { Input } from '../../../components/ui/Input';
+import { useToast } from '../../../components/ui/Toast';
 
 type UserHandles = Record<CodingPlatform, string>;
 
@@ -59,6 +60,7 @@ const PLATFORM_INFO: Record<
 };
 
 export default function CodingPage() {
+  const toast = useToast();
   const [handles, setHandles] = useState<UserHandles>(DEFAULT_HANDLES);
   const [summary, setSummary] = useState<CodingSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -135,6 +137,7 @@ export default function CodingPage() {
 
     setEditingPlatform(null);
     setLoading(true);
+    toast.success('Coding handle saved');
     fetchCodingStats(updated);
   };
 

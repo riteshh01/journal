@@ -25,10 +25,12 @@ import { Input, Textarea } from '../../../../components/ui/Input';
 import { Spinner } from '../../../../components/ui/Spinner';
 import { Modal } from '../../../../components/ui/Modal';
 import { Card } from '../../../../components/ui/Card';
+import { useToast } from '../../../../components/ui/Toast';
 
 export default function JournalDateEntryPage() {
   const params = useParams();
   const router = useRouter();
+  const toast = useToast();
   const dateStr = (params?.date as string) || '';
 
   const [entry, setEntry] = useState<JournalEntry | null>(null);
@@ -110,13 +112,16 @@ export default function JournalDateEntryPage() {
       if (res.task) {
         setTasks((prev) => [...prev, res.task]);
         setNewTaskTitle('');
+        toast.success('Task added');
         if (!entry) {
           // Sync entry existence so delete button and entry ID are aligned
           fetchEntry();
         }
       }
     } catch (err: any) {
-      setTaskError(err.message || 'Failed to add task');
+      const msg = err.message || 'Failed to add task';
+      setTaskError(msg);
+      toast.error(msg);
     } finally {
       setAddingTask(false);
     }
@@ -138,7 +143,9 @@ export default function JournalDateEntryPage() {
       setTasks((prev) =>
         prev.map((t) => (t.id === taskId ? { ...t, is_completed: currentCompleted } : t))
       );
-      setTaskError(err.message || 'Failed to update task');
+      const msg = err.message || 'Failed to update task';
+      setTaskError(msg);
+      toast.error(msg);
     }
   };
 
@@ -148,16 +155,21 @@ export default function JournalDateEntryPage() {
 
     try {
       await api.delete(`/journal/tasks/${taskId}`);
+      toast.info('Task removed');
     } catch (err: any) {
       setTasks(prevTasks);
-      setTaskError(err.message || 'Failed to delete task');
+      const msg = err.message || 'Failed to delete task';
+      setTaskError(msg);
+      toast.error(msg);
     }
   };
 
   const handleSave = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!title.trim()) {
-      setError('Title is required to save a journal entry');
+      const msg = 'Title is required to save a journal entry';
+      setError(msg);
+      toast.error(msg);
       return;
     }
 
@@ -177,9 +189,13 @@ export default function JournalDateEntryPage() {
         setTasks(res.entry.tasks);
       }
       setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000);
+      toast.success('Journal entry saved successfully');
+      router.push('/journal');
+      router.refresh();
     } catch (err: any) {
-      setError(err.message || 'Failed to save entry');
+      const msg = err.message || 'Failed to save entry';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
@@ -190,10 +206,13 @@ export default function JournalDateEntryPage() {
     try {
       await api.delete(`/journal/${dateStr}`);
       setShowDeleteModal(false);
+      toast.success('Journal entry deleted');
       router.push('/journal');
       router.refresh();
     } catch (err: any) {
-      setError(err.message || 'Failed to delete entry');
+      const msg = err.message || 'Failed to delete entry';
+      setError(msg);
+      toast.error(msg);
       setDeleting(false);
     }
   };

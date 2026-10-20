@@ -5,9 +5,11 @@ import { Edit2, Check, X, Calendar as CalendarIcon } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { formatDate } from '../../lib/utils';
 import { Button } from '../ui/Button';
+import { useToast } from '../ui/Toast';
 
 export function Banner() {
   const { user, updateProfile } = useAuth();
+  const toast = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [mottoText, setMottoText] = useState(user?.banner_text || '');
   const [saving, setSaving] = useState(false);
@@ -38,8 +40,9 @@ export function Banner() {
         banner_text: mottoText.trim() || null,
       });
       setIsEditing(false);
-    } catch (err) {
-      console.error('Failed to update motto:', err);
+      toast.success('Daily motto updated');
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to update motto');
     } finally {
       setSaving(false);
     }

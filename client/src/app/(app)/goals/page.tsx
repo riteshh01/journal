@@ -20,8 +20,10 @@ import { Input, Textarea } from '../../../components/ui/Input';
 import { Spinner } from '../../../components/ui/Spinner';
 import { Modal } from '../../../components/ui/Modal';
 import { Card } from '../../../components/ui/Card';
+import { useToast } from '../../../components/ui/Toast';
 
 export default function GoalsPage() {
+  const toast = useToast();
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -104,8 +106,11 @@ export default function GoalsPage() {
 
       setGoals((prev) => [res.goal, ...prev]);
       setIsCreateModalOpen(false);
+      toast.success('Goal created successfully');
     } catch (err: any) {
-      setError(err.message || 'Failed to create goal');
+      const msg = err.message || 'Failed to create goal';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setActionLoading(false);
     }
@@ -129,8 +134,11 @@ export default function GoalsPage() {
 
       setGoals((prev) => prev.map((g) => (g.id === editingGoal.id ? res.goal : g)));
       setEditingGoal(null);
+      toast.success('Goal updated');
     } catch (err: any) {
-      setError(err.message || 'Failed to update goal');
+      const msg = err.message || 'Failed to update goal';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setActionLoading(false);
     }
@@ -166,8 +174,11 @@ export default function GoalsPage() {
       await api.delete(`/goals/${deletingGoal.id}`);
       setGoals((prev) => prev.filter((g) => g.id !== deletingGoal.id));
       setDeletingGoal(null);
+      toast.success('Goal deleted');
     } catch (err: any) {
-      setError(err.message || 'Failed to delete goal');
+      const msg = err.message || 'Failed to delete goal';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setActionLoading(false);
     }

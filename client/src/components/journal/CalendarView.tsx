@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Edit3 } from 'lucide-react';
 import { Button } from '../ui/Button';
-import { cn } from '../../lib/utils';
+import { cn, getTodayString } from '../../lib/utils';
 
 interface CalendarViewProps {
   entryDates: Set<string>;
@@ -54,10 +54,7 @@ export function CalendarView({ entryDates }: CalendarViewProps) {
     return `${year}-${m}-${d}`;
   };
 
-  const todayStr = (() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-  })();
+  const todayStr = getTodayString();
 
   const calendarCells = [];
   // Empty padding cells for previous month days
@@ -134,6 +131,8 @@ export function CalendarView({ entryDates }: CalendarViewProps) {
           const dateStr = formatDayString(day);
           const hasEntry = entryDates.has(dateStr);
           const isToday = dateStr === todayStr;
+          const isPast = dateStr < todayStr;
+          const isMissed = (isPast || isToday) && !hasEntry;
 
           return (
             <button
@@ -144,6 +143,8 @@ export function CalendarView({ entryDates }: CalendarViewProps) {
                 'h-10 sm:h-14 p-1 sm:p-1.5 rounded-md sm:rounded-lg border text-left transition-all flex flex-col justify-between group relative',
                 hasEntry
                   ? 'bg-accent/5 dark:bg-accent/10 border-accent/40 hover:border-accent hover:bg-accent/10'
+                  : isMissed
+                  ? 'bg-background border-border hover:border-[#DC2626]/50 hover:bg-[#DC2626]/5'
                   : 'bg-background border-border hover:bg-surface-hover hover:border-text-muted',
                 isToday && 'ring-2 ring-accent'
               )}
@@ -152,23 +153,35 @@ export function CalendarView({ entryDates }: CalendarViewProps) {
                 <span
                   className={cn(
                     'text-[11px] sm:text-xs font-semibold',
-                    isToday ? 'text-accent font-bold' : hasEntry ? 'text-text font-bold' : 'text-text'
+                    isToday ? 'text-accent font-bold' : hasEntry ? 'text-text font-bold' : isMissed ? 'text-text' : 'text-text-muted'
                   )}
                 >
                   {day}
                 </span>
-                {hasEntry && (
+                {hasEntry ? (
                   <span
-                    className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-accent shrink-0"
+                    className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-accent shrink-0 shadow-2xs"
                     title="Entry recorded"
                   />
-                )}
+                ) : isMissed ? (
+                  <span
+                    className={cn(
+                      'w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#DC2626] dark:bg-[#EF4444] shrink-0 shadow-2xs',
+                      isToday && 'animate-pulse'
+                    )}
+                    title={isToday ? "Today - No entry recorded yet" : "Missed journal entry"}
+                  />
+                ) : null}
               </div>
 
               {/* Sub-label visible on larger screens */}
               <div className="text-[10px] text-text-muted hidden sm:flex items-center justify-end w-full">
                 {hasEntry ? (
                   <span className="text-[10px] font-medium text-accent">View</span>
+                ) : isMissed ? (
+                  <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[#DC2626] dark:text-[#EF4444] font-medium">
+                    Write
+                  </span>
                 ) : (
                   <span className="opacity-0 group-hover:opacity-100 transition-opacity text-text-muted">
                     <Edit3 className="w-3 h-3" />
@@ -178,6 +191,22 @@ export function CalendarView({ entryDates }: CalendarViewProps) {
             </button>
           );
         })}
+      </div>
+
+      {/* Calendar Legend */}
+      <div className="flex items-center justify-between pt-3 mt-3 border-t border-border text-[11px] text-text-muted">
+        <div className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-accent inline-block shrink-0 shadow-2xs" />
+          <span>Recorded</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-[#DC2626] dark:bg-[#EF4444] inline-block shrink-0 shadow-2xs" />
+          <span>Missed</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-xs border-2 border-accent inline-block shrink-0" />
+          <span>Today</span>
+        </div>
       </div>
     </div>
   );

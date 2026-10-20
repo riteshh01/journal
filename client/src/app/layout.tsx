@@ -3,6 +3,7 @@ import './globals.css';
 import { ThemeProvider } from '../hooks/useTheme';
 import { AuthProvider } from '../hooks/useAuth';
 import { ViewportScrollRestoration } from '../components/layout/ViewportScrollRestoration';
+import { ToastProvider } from '../components/ui/Toast';
 
 export const metadata: Metadata = {
   title: 'Personal Journal & Life Dashboard',
@@ -43,9 +44,11 @@ export default function RootLayout({
       </head>
       <body className="bg-background text-text transition-colors duration-150 antialiased min-h-screen">
         <ViewportScrollRestoration />
-        <ThemeProvider>
-          <AuthProvider>{children}</AuthProvider>
-        </ThemeProvider>
+        <ToastProvider>
+          <ThemeProvider>
+            <AuthProvider>{children}</AuthProvider>
+          </ThemeProvider>
+        </ToastProvider>
       </body>
     </html>
   );
