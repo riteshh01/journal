@@ -7,12 +7,12 @@ import { sendError } from '../utils/response.js';
 const storage = multer.memoryStorage();
 
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
-const MAX_VIDEO_SIZE = 200 * 1024 * 1024; // 200MB
+const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50 MB
 
 export const multerUpload = multer({
   storage,
   limits: {
-    fileSize: MAX_VIDEO_SIZE, // Global ceiling
+    fileSize: MAX_VIDEO_SIZE, // Global ceiling 100MB
     files: 1,
   },
 });
@@ -28,6 +28,8 @@ export const ALLOWED_VIDEO_MIMES = [
   'video/mp4',
   'video/webm',
   'video/quicktime',
+  'video/x-m4v',
+  'video/x-matroska',
 ];
 
 export interface ValidatedFile {
@@ -84,7 +86,7 @@ export const validateMagicBytes = async (
     }
 
     if (isVideo && req.file.size > MAX_VIDEO_SIZE) {
-      sendError(res, 'Video exceeds maximum allowable size of 200MB', 'VIDEO_TOO_LARGE', 400);
+      sendError(res, 'Video exceeds maximum allowable size of 50MB', 'VIDEO_TOO_LARGE', 400);
       return;
     }
 

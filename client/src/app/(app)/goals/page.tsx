@@ -66,6 +66,15 @@ export default function GoalsPage() {
     fetchGoals();
   }, [fetchGoals]);
 
+  const handleCloseModal = useCallback(() => {
+    setIsCreateModalOpen(false);
+    setEditingGoal(null);
+  }, []);
+
+  const handleCloseDeleteModal = useCallback(() => {
+    setDeletingGoal(null);
+  }, []);
+
   const handleOpenCreate = () => {
     setTitle('');
     setDescription('');
@@ -360,23 +369,21 @@ export default function GoalsPage() {
       {/* Create / Edit Goal Modal */}
       <Modal
         isOpen={isCreateModalOpen || Boolean(editingGoal)}
-        onClose={() => {
-          setIsCreateModalOpen(false);
-          setEditingGoal(null);
-        }}
+        onClose={handleCloseModal}
         title={editingGoal ? 'Edit Goal' : 'Create New Goal'}
       >
         <form onSubmit={editingGoal ? handleUpdateGoal : handleCreateGoal} className="space-y-4">
           <Input
+            id="goal-title"
             label="Goal Title"
             required
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g. Run 10km under 50 minutes"
-            autoFocus
           />
 
           <Textarea
+            id="goal-description"
             label="Description (Optional)"
             rows={3}
             value={description}
@@ -386,6 +393,7 @@ export default function GoalsPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <Input
+              id="goal-category"
               label="Category (Optional)"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
@@ -394,8 +402,9 @@ export default function GoalsPage() {
             />
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium text-text">Priority</label>
+              <label htmlFor="goal-priority" className="text-xs font-medium text-text">Priority</label>
               <select
+                id="goal-priority"
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as PriorityLevel)}
                 className="w-full px-3 py-2 text-base sm:text-sm bg-background text-text border border-border rounded-md focus:outline-none focus:border-accent"
@@ -409,8 +418,9 @@ export default function GoalsPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium text-text">Status</label>
+              <label htmlFor="goal-status" className="text-xs font-medium text-text">Status</label>
               <select
+                id="goal-status"
                 value={status}
                 onChange={(e) => setStatus(e.target.value as GoalStatus)}
                 className="w-full px-3 py-2 text-base sm:text-sm bg-background text-text border border-border rounded-md focus:outline-none focus:border-accent"
@@ -423,6 +433,7 @@ export default function GoalsPage() {
             </div>
 
             <Input
+              id="goal-progress"
               label={`Progress (${progress}%)`}
               type="range"
               min={0}
@@ -435,6 +446,7 @@ export default function GoalsPage() {
           </div>
 
           <Input
+            id="goal-target-date"
             label="Target Date (Optional)"
             type="date"
             value={targetDate}
@@ -446,10 +458,7 @@ export default function GoalsPage() {
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => {
-                setIsCreateModalOpen(false);
-                setEditingGoal(null);
-              }}
+              onClick={handleCloseModal}
               disabled={actionLoading}
             >
               Cancel
@@ -469,7 +478,7 @@ export default function GoalsPage() {
       {/* Delete Confirmation Modal */}
       <Modal
         isOpen={Boolean(deletingGoal)}
-        onClose={() => setDeletingGoal(null)}
+        onClose={handleCloseDeleteModal}
         title="Delete Goal"
         maxWidth="sm"
       >
@@ -482,7 +491,7 @@ export default function GoalsPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setDeletingGoal(null)}
+              onClick={handleCloseDeleteModal}
               disabled={actionLoading}
             >
               Cancel

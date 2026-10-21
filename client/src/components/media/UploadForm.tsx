@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
-import { Upload, X, Check, AlertCircle } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Upload, AlertCircle, Image as ImageIcon, Film } from 'lucide-react';
 import { api } from '../../lib/api';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { MediaType, Media } from '../../types';
+import { cn } from '../../lib/utils';
 
 interface UploadFormProps {
   mediaType: MediaType;
@@ -15,11 +16,12 @@ interface UploadFormProps {
 }
 
 export function UploadForm({
-  mediaType,
+  mediaType: initialMediaType,
   onStartUpload,
   onUploadSuccess,
   onCancel,
 }: UploadFormProps) {
+  const [selectedType, setSelectedType] = useState<MediaType>(initialMediaType);
   const [file, setFile] = useState<File | null>(null);
   const [caption, setCaption] = useState('');
   const [takenOn, setTakenOn] = useState('');
@@ -27,16 +29,34 @@ export function UploadForm({
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const isImage = mediaType === 'image';
-  const acceptMime = isImage ? 'image/jpeg,image/png,image/webp,image/gif' : 'video/mp4,video/webm,video/quicktime';
-  const maxSizeMb = isImage ? 10 : 200;
+  useEffect(() => {
+    setSelectedType(initialMediaType);
+  }, [initialMediaType]);
+
+  const isImage = selectedType === 'image';
+  const acceptMime = isImage
+    ? 'image/jpeg,image/png,image/webp,image/gif'
+    : 'video/mp4,video/webm,video/quicktime,video/x-m4v';
+  const maxSizeMb = isImage ? 10 : 50;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setError(null);
     if (e.target.files && e.target.files[0]) {
       const selected = e.target.files[0];
-      if (selected.size > maxSizeMb * 1024 * 1024) {
-        setError(`File exceeds maximum size of ${maxSizeMb}MB`);
+
+      // Auto-detect if user selected a video or image file
+      const isVideoFile =
+        selected.type.startsWith('video/') ||
+        /\.(mp4|mov|webm|m4v|ogv|mkv)$/i.test(selected.name);
+
+      const effectiveType: MediaType = isVideoFile ? 'video' : 'image';
+      setSelectedType(effectiveType);
+
+      const effectiveLimitMb = effectiveType === 'video' ? 50 : 10;
+      if (selected.size > effectiveLimitMb * 1024 * 1024) {
+        setError(
+          `${effectiveType === 'video' ? 'Video' : 'Image'} exceeds maximum allowable size of ${effectiveLimitMb}MB`
+        );
         setFile(null);
         return;
       }
@@ -93,6 +113,48 @@ export function UploadForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Type Toggle: Photo vs Video */}
+      <div className="flex items-center justify-center p-1 bg-surface border border-border rounded-lg">
+        <button
+          type="button"
+          onClick={() => {
+            setSelectedType('image');
+            setError(null);
+            if (file && (file.type.startsWith('video/') || /\.(mp4|mov|webm|m4v|mkv)$/i.test(file.name))) {
+              setFile(null);
+            }
+          }}
+          className={cn(
+            'flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold rounded-md transition-all',
+            isImage
+              ? 'bg-accent text-accent-contrast shadow-2xs'
+              : 'text-text-muted hover:text-text'
+          )}
+        >
+          <ImageIcon className="w-3.5 h-3.5" />
+          <span>Photo (up to 10MB)</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setSelectedType('video');
+            setError(null);
+            if (file && !(file.type.startsWith('video/') || /\.(mp4|mov|webm|m4v|mkv)$/i.test(file.name))) {
+              setFile(null);
+            }
+          }}
+          className={cn(
+            'flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold rounded-md transition-all',
+            !isImage
+              ? 'bg-accent text-accent-contrast shadow-2xs'
+              : 'text-text-muted hover:text-text'
+          )}
+        >
+          <Film className="w-3.5 h-3.5" />
+          <span>Video (up to 50MB)</span>
+        </button>
+      </div>
+
       {error && (
         <div className="p-3 bg-background border border-[#DC2626] rounded-md text-xs text-[#DC2626] flex items-center gap-2">
           <AlertCircle className="w-4 h-4 shrink-0" />
@@ -121,13 +183,13 @@ export function UploadForm({
             {file ? (
               <span className="text-accent font-semibold">{file.name}</span>
             ) : (
-              <span>Click to select {isImage ? 'an image' : 'a video'}</span>
+              <span>Click to select {isImage ? 'a photo' : 'a video'}</span>
             )}
           </div>
           <p className="text-xs text-text-muted">
             {isImage
               ? 'JPEG, PNG, WEBP, GIF up to 10MB'
-              : 'MP4, WEBM, MOV up to 200MB'}
+              : 'MP4, WEBM, MOV up to 50MB'}
           </p>
         </div>
       </div>
@@ -160,7 +222,7 @@ export function UploadForm({
           loading={uploading}
           disabled={!file || uploading}
         >
-          Upload {isImage ? 'Image' : 'Video'}
+          Upload {isImage ? 'Photo' : 'Video'}
         </Button>
       </div>
     </form>

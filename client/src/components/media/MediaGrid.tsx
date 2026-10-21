@@ -1,15 +1,24 @@
 'use client';
 
-import React, { useState } from 'react';
-import Image from 'next/image';
-import { Trash2, Edit2, Play, Calendar, ExternalLink, Upload, AlertCircle, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import {
+  Trash2,
+  Edit2,
+  Play,
+  Calendar,
+  ExternalLink,
+  Upload,
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 import { Media, MediaType } from '../../types';
 import { api } from '../../lib/api';
 import { formatDate } from '../../lib/utils';
 import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
 import { Input } from '../ui/Input';
-import { VideoPlayer } from './VideoPlayer';
+import { VideoPlayer, VideoPlayMode } from './VideoPlayer';
 import { useToast } from '../ui/Toast';
 
 export interface PendingUploadItem {
@@ -41,12 +50,78 @@ export function MediaGrid({
 }: MediaGridProps) {
   const toast = useToast();
   const [selectedMedia, setSelectedMedia] = useState<Media | null>(null);
+  const [autoPlayNext, setAutoPlayNext] = useState(false);
+  const [videoPlayMode, setVideoPlayMode] = useState<VideoPlayMode>('autonext');
+
   const [editingMedia, setEditingMedia] = useState<Media | null>(null);
   const [deletingMedia, setDeletingMedia] = useState<Media | null>(null);
   const [newCaption, setNewCaption] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
 
   const isVideo = mediaType === 'video';
+
+  const currentIndex = selectedMedia
+    ? mediaList.findIndex((m) => m.id === selectedMedia.id)
+    : -1;
+  const hasMultiple = mediaList.length > 1;
+
+  // Navigate to previous item
+  const handlePrevMedia = useCallback(() => {
+    if (mediaList.length <= 1 || currentIndex === -1) return;
+    const prevIndex = (currentIndex - 1 + mediaList.length) % mediaList.length;
+    setSelectedMedia(mediaList[prevIndex]);
+    setAutoPlayNext(true);
+  }, [currentIndex, mediaList]);
+
+  // Navigate to next item
+  const handleNextMedia = useCallback(
+    (shouldAutoPlay = true) => {
+      if (mediaList.length <= 1 || currentIndex === -1) return;
+      const nextIndex = (currentIndex + 1) % mediaList.length;
+      setSelectedMedia(mediaList[nextIndex]);
+      setAutoPlayNext(shouldAutoPlay);
+    },
+    [currentIndex, mediaList]
+  );
+
+  // Keyboard navigation when preview modal is open
+  useEffect(() => {
+    if (!selectedMedia) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') {
+        handleNextMedia(true);
+      } else if (e.key === 'ArrowLeft') {
+        handlePrevMedia();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedMedia, handleNextMedia, handlePrevMedia]);
+
+  // Touch swipe gestures for Image Preview
+  const imgTouchStartX = useRef<number | null>(null);
+  const imgTouchStartY = useRef<number | null>(null);
+
+  const handleImgTouchStart = (e: React.TouchEvent) => {
+    imgTouchStartX.current = e.touches[0].clientX;
+    imgTouchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleImgTouchEnd = (e: React.TouchEvent) => {
+    if (imgTouchStartX.current === null || imgTouchStartY.current === null) return;
+    const deltaX = e.changedTouches[0].clientX - imgTouchStartX.current;
+    const deltaY = e.changedTouches[0].clientY - imgTouchStartY.current;
+
+    if (Math.abs(deltaX) > 40 && Math.abs(deltaX) > Math.abs(deltaY) * 1.3) {
+      if (deltaX < 0) {
+        handleNextMedia(true);
+      } else {
+        handlePrevMedia();
+      }
+    }
+    imgTouchStartX.current = null;
+    imgTouchStartY.current = null;
+  };
 
   const handleStartEdit = (m: Media) => {
     setEditingMedia(m);
@@ -199,7 +274,10 @@ export function MediaGrid({
           >
             {/* Media Thumbnail Container */}
             <div
-              onClick={() => setSelectedMedia(item)}
+              onClick={() => {
+                setSelectedMedia(item);
+                setAutoPlayNext(false);
+              }}
               className="relative aspect-[4/3] sm:aspect-video bg-background cursor-pointer overflow-hidden flex items-center justify-center"
             >
               {isVideo ? (
@@ -265,11 +343,18 @@ export function MediaGrid({
         ))}
       </div>
 
-      {/* Media Preview Modal (Mobile friendly) */}
+      {/* Media Preview Modal (Mobile friendly with Swipe & Controls) */}
       <Modal
         isOpen={Boolean(selectedMedia)}
-        onClose={() => setSelectedMedia(null)}
-        title={isVideo ? 'Video Player' : (selectedMedia?.caption || 'Image Preview')}
+        onClose={() => {
+          setSelectedMedia(null);
+          setAutoPlayNext(false);
+        }}
+        title={
+          isVideo
+            ? `Video Player (${currentIndex + 1} of ${mediaList.length})`
+            : (selectedMedia?.caption || `Image Preview (${currentIndex + 1} of ${mediaList.length})`)
+        }
         maxWidth="2xl"
       >
         {selectedMedia && (
@@ -279,28 +364,83 @@ export function MediaGrid({
                 src={selectedMedia.url}
                 poster={selectedMedia.thumbnail_url}
                 caption={selectedMedia.caption}
+                playMode={videoPlayMode}
+                onPlayModeChange={setVideoPlayMode}
+                onNext={() => handleNextMedia(true)}
+                onPrev={handlePrevMedia}
+                hasNext={hasMultiple}
+                hasPrev={hasMultiple}
+                autoPlay={autoPlayNext}
               />
             ) : (
-              <div className="relative max-h-[60vh] sm:max-h-[72vh] w-full flex items-center justify-center bg-black/25 rounded-lg sm:rounded-xl overflow-hidden border border-border">
+              <div
+                className="relative max-h-[60vh] sm:max-h-[72vh] w-full flex items-center justify-center bg-black/30 rounded-lg sm:rounded-xl overflow-hidden border border-border select-none group"
+                onTouchStart={handleImgTouchStart}
+                onTouchEnd={handleImgTouchEnd}
+              >
                 <img
                   src={selectedMedia.url}
                   alt={selectedMedia.caption || 'Preview image'}
                   className="max-h-[60vh] sm:max-h-[72vh] w-auto max-w-full object-contain mx-auto"
                 />
+
+                {/* Left & Right floating chevron buttons for photo navigation */}
+                {hasMultiple && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePrevMedia();
+                      }}
+                      aria-label="Previous photo"
+                      title="Previous photo (Swipe Right)"
+                      className="absolute left-2.5 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-black/60 hover:bg-black/85 text-white flex items-center justify-center transition-all opacity-85 sm:opacity-0 sm:group-hover:opacity-100 z-10 shadow-md backdrop-blur-2xs touch-manipulation"
+                    >
+                      <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleNextMedia(false);
+                      }}
+                      aria-label="Next photo"
+                      title="Next photo (Swipe Left)"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-black/60 hover:bg-black/85 text-white flex items-center justify-center transition-all opacity-85 sm:opacity-0 sm:group-hover:opacity-100 z-10 shadow-md backdrop-blur-2xs touch-manipulation"
+                    >
+                      <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+                    </button>
+                  </>
+                )}
               </div>
             )}
 
-            <div className="flex items-center justify-between text-[11px] sm:text-xs text-text-muted pt-2 border-t border-border">
-              <span>Recorded: {formatDate(selectedMedia.taken_on || selectedMedia.created_at)}</span>
-              <a
-                href={selectedMedia.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-accent font-semibold hover:underline"
-              >
-                <span>Open original</span>
-                <ExternalLink className="w-3 h-3" />
-              </a>
+            {/* Navigation indicator & info row */}
+            <div className="flex flex-wrap items-center justify-between text-[11px] sm:text-xs text-text-muted pt-2 border-t border-border gap-2">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-text">
+                  {currentIndex + 1} of {mediaList.length}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <span>
+                  {selectedMedia.taken_on
+                    ? formatDate(selectedMedia.taken_on)
+                    : formatDate(selectedMedia.created_at)}
+                </span>
+                <a
+                  href={selectedMedia.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-accent font-semibold hover:underline"
+                >
+                  <span>Open original</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
             </div>
           </div>
         )}

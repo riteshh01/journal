@@ -88,6 +88,15 @@ export interface CodingSummary {
   dailyActivity: DailyActivityItem[];
 }
 
+export interface JournalDailyActivity {
+  date: string;
+  label: string;
+  dayOfWeek: string;
+  journalWritten: boolean;
+  tasksAdded: number;
+  tasksCompleted: number;
+}
+
 export interface DashboardSummary {
   stats: {
     totalEntries: number;
@@ -117,6 +126,7 @@ export interface DashboardSummary {
     weekStart: string;
     count: number;
   }[];
+  dailyActivity?: JournalDailyActivity[];
   moodTrend: {
     date: string;
     label: string;

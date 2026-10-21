@@ -47,7 +47,15 @@ export default function MediaPage() {
   const handleStartUpload = async (file: File, caption: string, takenOn: string) => {
     const uploadId = `upload-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     const previewUrl = URL.createObjectURL(file);
-    const targetMediaType = activeTab;
+    const isVideo = file.type.startsWith('video/') || /\.(mp4|mov|webm|m4v|ogv|mkv)$/i.test(file.name);
+    const targetMediaType: MediaType = isVideo ? 'video' : 'image';
+
+    // Auto-switch tab to match uploaded file type so the user sees the progress immediately
+    if (isVideo && activeTab !== 'video') {
+      setActiveTab('video');
+    } else if (!isVideo && activeTab !== 'image') {
+      setActiveTab('image');
+    }
 
     const newPending: PendingUploadItem = {
       id: uploadId,
@@ -245,7 +253,7 @@ export default function MediaPage() {
       <Modal
         isOpen={isUploadModalOpen}
         onClose={() => setIsUploadModalOpen(false)}
-        title={isImageTab ? 'Upload Image' : 'Upload Video'}
+        title="Upload Media Asset"
         maxWidth="md"
       >
         <UploadForm

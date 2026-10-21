@@ -29,6 +29,14 @@ export interface DashboardSummary {
     weekStart: string;
     count: number;
   }[];
+  dailyActivity: {
+    date: string;
+    label: string;
+    dayOfWeek: string;
+    journalWritten: boolean;
+    tasksAdded: number;
+    tasksCompleted: number;
+  }[];
   moodTrend: {
     date: string;
     label: string;
@@ -124,6 +132,46 @@ export class DashboardService {
         AND je.entry_date < (w.week_start + INTERVAL '7 days')::DATE
       GROUP BY w.week_start
       ORDER BY w.week_start ASC
+      `,
+      [userId, validDate]
+    );
+
+    // 5b. Daily activity (Last 30 days): journal written, tasks added, tasks completed
+    const dailyActivityRes = await query<{
+      date: string;
+      label: string;
+      day_of_week: string;
+      journal_written: boolean;
+      tasks_added: number;
+      tasks_completed: number;
+    }>(
+      `
+      WITH days AS (
+        SELECT (COALESCE($2::DATE, CURRENT_DATE) - (n || ' days')::interval)::DATE AS day_date
+        FROM generate_series(29, 0, -1) AS n
+      )
+      SELECT
+        TO_CHAR(d.day_date, 'YYYY-MM-DD') AS date,
+        TO_CHAR(d.day_date, 'Mon DD') AS label,
+        TO_CHAR(d.day_date, 'Dy') AS day_of_week,
+        (
+          je.id IS NOT NULL AND (
+            LENGTH(TRIM(je.content)) > 0
+            OR je.mood IS NOT NULL
+            OR (je.title IS NOT NULL AND je.title != ('Journal Entry - ' || TO_CHAR(d.day_date, 'YYYY-MM-DD')) AND LENGTH(TRIM(je.title)) > 0)
+          )
+        ) AS journal_written,
+        COALESCE(COUNT(jt.id), 0)::int AS tasks_added,
+        COALESCE(COUNT(jt.id) FILTER (WHERE jt.is_completed = true), 0)::int AS tasks_completed
+      FROM days d
+      LEFT JOIN journal_entries je
+        ON je.user_id = $1
+        AND je.entry_date = d.day_date
+      LEFT JOIN journal_tasks jt
+        ON jt.user_id = $1
+        AND jt.journal_entry_id = je.id
+      GROUP BY d.day_date, je.id, je.title, je.content, je.mood
+      ORDER BY d.day_date ASC
       `,
       [userId, validDate]
     );
@@ -247,6 +295,14 @@ export class DashboardService {
         label: r.label,
         weekStart: r.week_start,
         count: r.count,
+      })),
+      dailyActivity: dailyActivityRes.rows.map((r) => ({
+        date: r.date,
+        label: r.label,
+        dayOfWeek: r.day_of_week,
+        journalWritten: Boolean(r.journal_written),
+        tasksAdded: r.tasks_added,
+        tasksCompleted: r.tasks_completed,
       })),
       moodTrend: moodRes.rows.map((r) => ({
         date: r.date,
