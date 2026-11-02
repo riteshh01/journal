@@ -2,11 +2,16 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Upload, AlertCircle, Image as ImageIcon, Film } from 'lucide-react';
-import { api } from '../../lib/api';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { MediaType, Media } from '../../types';
 import { cn } from '../../lib/utils';
+import {
+  uploadMediaAsset,
+  isVideoFile,
+  MAX_IMAGE_SIZE_BYTES,
+  MAX_VIDEO_SIZE_BYTES,
+} from '../../lib/mediaUpload';
 
 interface UploadFormProps {
   mediaType: MediaType;
@@ -35,9 +40,8 @@ export function UploadForm({
 
   const isImage = selectedType === 'image';
   const acceptMime = isImage
-    ? 'image/jpeg,image/png,image/webp,image/gif'
-    : 'video/mp4,video/webm,video/quicktime,video/x-m4v';
-  const maxSizeMb = isImage ? 10 : 50;
+    ? 'image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif'
+    : 'video/mp4,video/webm,video/quicktime,video/x-m4v,video/x-matroska,.mp4,.mov,.webm,.m4v,.mkv';
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setError(null);
@@ -45,17 +49,15 @@ export function UploadForm({
       const selected = e.target.files[0];
 
       // Auto-detect if user selected a video or image file
-      const isVideoFile =
-        selected.type.startsWith('video/') ||
-        /\.(mp4|mov|webm|m4v|ogv|mkv)$/i.test(selected.name);
-
-      const effectiveType: MediaType = isVideoFile ? 'video' : 'image';
+      const isVideo = isVideoFile(selected);
+      const effectiveType: MediaType = isVideo ? 'video' : 'image';
       setSelectedType(effectiveType);
 
-      const effectiveLimitMb = effectiveType === 'video' ? 50 : 10;
-      if (selected.size > effectiveLimitMb * 1024 * 1024) {
+      const maxBytes = isVideo ? MAX_VIDEO_SIZE_BYTES : MAX_IMAGE_SIZE_BYTES;
+      const limitMb = isVideo ? 100 : 10;
+      if (selected.size > maxBytes) {
         setError(
-          `${effectiveType === 'video' ? 'Video' : 'Image'} exceeds maximum allowable size of ${effectiveLimitMb}MB`
+          `${effectiveType === 'video' ? 'Video' : 'Photo'} exceeds maximum allowable size of ${limitMb}MB`
         );
         setFile(null);
         return;
@@ -86,24 +88,19 @@ export function UploadForm({
     setUploading(true);
     setError(null);
 
-    const formData = new FormData();
-    formData.append('file', file);
-    if (caption.trim()) {
-      formData.append('caption', caption.trim());
-    }
-    if (takenOn) {
-      formData.append('taken_on', takenOn);
-    }
-
     try {
-      const res = await api.upload<{ media: Media }>('/media', formData);
+      const media = await uploadMediaAsset(file, {
+        caption: caption.trim(),
+        takenOn: takenOn || undefined,
+      });
+
       setFile(null);
       setCaption('');
       setTakenOn('');
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
-      onUploadSuccess?.(res.media);
+      onUploadSuccess?.(media);
     } catch (err: any) {
       setError(err.message || 'Upload failed');
     } finally {
@@ -120,7 +117,7 @@ export function UploadForm({
           onClick={() => {
             setSelectedType('image');
             setError(null);
-            if (file && (file.type.startsWith('video/') || /\.(mp4|mov|webm|m4v|mkv)$/i.test(file.name))) {
+            if (file && isVideoFile(file)) {
               setFile(null);
             }
           }}
@@ -139,7 +136,7 @@ export function UploadForm({
           onClick={() => {
             setSelectedType('video');
             setError(null);
-            if (file && !(file.type.startsWith('video/') || /\.(mp4|mov|webm|m4v|mkv)$/i.test(file.name))) {
+            if (file && !isVideoFile(file)) {
               setFile(null);
             }
           }}
@@ -151,7 +148,7 @@ export function UploadForm({
           )}
         >
           <Film className="w-3.5 h-3.5" />
-          <span>Video (up to 50MB)</span>
+          <span>Video (up to 100MB)</span>
         </button>
       </div>
 
@@ -189,7 +186,7 @@ export function UploadForm({
           <p className="text-xs text-text-muted">
             {isImage
               ? 'JPEG, PNG, WEBP, GIF up to 10MB'
-              : 'MP4, WEBM, MOV up to 50MB'}
+              : 'MP4, WEBM, MOV, MKV up to 100MB'}
           </p>
         </div>
       </div>

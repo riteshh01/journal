@@ -7,6 +7,7 @@ import { api } from '../../../lib/api';
 import { Media, MediaType } from '../../../types';
 import { MediaGrid, PendingUploadItem } from '../../../components/media/MediaGrid';
 import { UploadForm } from '../../../components/media/UploadForm';
+import { uploadMediaAsset, isVideoFile } from '../../../lib/mediaUpload';
 import { Button } from '../../../components/ui/Button';
 import { Modal } from '../../../components/ui/Modal';
 import { Spinner } from '../../../components/ui/Spinner';
@@ -47,7 +48,7 @@ export default function MediaPage() {
   const handleStartUpload = async (file: File, caption: string, takenOn: string) => {
     const uploadId = `upload-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     const previewUrl = URL.createObjectURL(file);
-    const isVideo = file.type.startsWith('video/') || /\.(mp4|mov|webm|m4v|ogv|mkv)$/i.test(file.name);
+    const isVideo = isVideoFile(file);
     const targetMediaType: MediaType = isVideo ? 'video' : 'image';
 
     // Auto-switch tab to match uploaded file type so the user sees the progress immediately
@@ -64,6 +65,7 @@ export default function MediaPage() {
       caption,
       mediaType: targetMediaType,
       status: 'uploading',
+      progress: 0,
     };
 
     // Close modal immediately so user sees the gallery
@@ -72,22 +74,21 @@ export default function MediaPage() {
     // Prepend to pending uploads list
     setPendingUploads((prev) => [newPending, ...prev]);
 
-    // Perform the background upload
-    const formData = new FormData();
-    formData.append('file', file);
-    if (caption.trim()) {
-      formData.append('caption', caption.trim());
-    }
-    if (takenOn) {
-      formData.append('taken_on', takenOn);
-    }
-
     try {
-      const res = await api.upload<{ media: Media }>('/media', formData);
-      if (res.media.media_type === 'image') {
-        setImages((prev) => [res.media, ...prev]);
+      const newMedia = await uploadMediaAsset(file, {
+        caption,
+        takenOn: takenOn || undefined,
+        onProgress: (percent) => {
+          setPendingUploads((prev) =>
+            prev.map((p) => (p.id === uploadId ? { ...p, progress: percent } : p))
+          );
+        },
+      });
+
+      if (newMedia.media_type === 'image') {
+        setImages((prev) => [newMedia, ...prev]);
       } else {
-        setVideos((prev) => [res.media, ...prev]);
+        setVideos((prev) => [newMedia, ...prev]);
       }
       setPendingUploads((prev) => prev.filter((p) => p.id !== uploadId));
       URL.revokeObjectURL(previewUrl);

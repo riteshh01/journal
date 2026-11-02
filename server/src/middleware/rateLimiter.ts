@@ -28,9 +28,10 @@ export const loginLimiter = createRateLimiter({
 
 export const uploadLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
-  max: 20,
+  max: 100,
   standardHeaders: true,
   legacyHeaders: false,
+  skipFailedRequests: true,
   handler: (_req: Request, res: Response) => {
     sendError(res, 'Upload limit reached. Please wait a few minutes before uploading more media.', 'UPLOAD_RATE_LIMITED', 429);
   },

@@ -46,8 +46,8 @@ export const uploadBufferToCloudinary = (
     );
 
     const bufferStream = new streamifier.PassThrough();
-    bufferStream.end(buffer);
     bufferStream.pipe(uploadStream);
+    bufferStream.end(buffer);
   });
 };
 

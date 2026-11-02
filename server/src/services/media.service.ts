@@ -1,6 +1,7 @@
 import { query } from '../config/db.js';
 import { Media, MediaType } from '../types/index.js';
-import { uploadBufferToCloudinary, deleteFromCloudinary } from '../config/cloudinary.js';
+import { uploadBufferToCloudinary, deleteFromCloudinary, cloudinary } from '../config/cloudinary.js';
+import { env } from '../config/env.js';
 import { ValidatedFile } from '../middleware/upload.js';
 
 export interface MediaListParams {
@@ -9,7 +10,83 @@ export interface MediaListParams {
   limit: number;
 }
 
+export interface DirectMediaInput {
+  media_type: MediaType;
+  cloudinary_public_id: string;
+  url: string;
+  thumbnail_url?: string | null;
+  caption?: string | null;
+  mime_type: string;
+  size_bytes: number;
+  journal_entry_id?: string | null;
+  taken_on?: string | null;
+}
+
 export class MediaService {
+  static generateUploadSignature(mediaType: MediaType = 'image'): {
+    signature: string;
+    timestamp: number;
+    apiKey: string;
+    cloudName: string;
+    folder: string;
+  } {
+    const timestamp = Math.round(Date.now() / 1000);
+    const folder = mediaType === 'video' ? 'journal-app/videos' : 'journal-app/images';
+    const paramsToSign = {
+      folder,
+      timestamp,
+    };
+    const signature = cloudinary.utils.api_sign_request(
+      paramsToSign,
+      env.CLOUDINARY_API_SECRET
+    );
+
+    return {
+      signature,
+      timestamp,
+      apiKey: env.CLOUDINARY_API_KEY,
+      cloudName: env.CLOUDINARY_CLOUD_NAME,
+      folder,
+    };
+  }
+
+  static async createMediaRecord(
+    userId: string,
+    data: DirectMediaInput
+  ): Promise<Media> {
+    const thumbnailUrl =
+      data.thumbnail_url ||
+      (data.media_type === 'video'
+        ? data.url.replace(/\.[^/.]+$/, '.jpg')
+        : data.url);
+
+    const res = await query<Media>(
+      `
+      INSERT INTO media (
+        user_id, media_type, cloudinary_public_id, url, thumbnail_url,
+        caption, mime_type, size_bytes, journal_entry_id, taken_on
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      RETURNING id, user_id, media_type, cloudinary_public_id, url, thumbnail_url,
+                caption, mime_type, size_bytes, journal_entry_id,
+                TO_CHAR(taken_on, 'YYYY-MM-DD') AS taken_on, created_at
+      `,
+      [
+        userId,
+        data.media_type,
+        data.cloudinary_public_id,
+        data.url,
+        thumbnailUrl,
+        data.caption || null,
+        data.mime_type,
+        data.size_bytes,
+        data.journal_entry_id || null,
+        data.taken_on || null,
+      ]
+    );
+
+    return res.rows[0];
+  }
   static async getMedia(
     userId: string,
     params: MediaListParams

@@ -28,6 +28,48 @@ export class MediaController {
     }
   }
 
+  static async getSignature(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const mediaType = (req.query.media_type || req.body?.media_type || 'image') as MediaType;
+      const sigData = MediaService.generateUploadSignature(mediaType);
+      sendSuccess(res, sigData, 200);
+    } catch (error: any) {
+      sendError(res, error.message || 'Failed to generate upload signature', 'SIGNATURE_FAILED', 500);
+    }
+  }
+
+  static async confirmUpload(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const {
+        cloudinary_public_id,
+        url,
+        thumbnail_url,
+        media_type,
+        mime_type,
+        size_bytes,
+        caption,
+        journal_entry_id,
+        taken_on,
+      } = req.body;
+
+      const media = await MediaService.createMediaRecord(req.user!.userId, {
+        cloudinary_public_id,
+        url,
+        thumbnail_url,
+        media_type,
+        mime_type,
+        size_bytes: Number(size_bytes),
+        caption,
+        journal_entry_id,
+        taken_on,
+      });
+
+      sendSuccess(res, { media }, 201);
+    } catch (error: any) {
+      sendError(res, error.message || 'Failed to confirm media upload', 'CONFIRM_FAILED', 500);
+    }
+  }
+
   static async uploadMedia(req: UploadRequest & AuthenticatedRequest, res: Response): Promise<void> {
     try {
       if (!req.validatedFile) {

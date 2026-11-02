@@ -7,7 +7,7 @@ import { sendError } from '../utils/response.js';
 const storage = multer.memoryStorage();
 
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
-const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50 MB
+const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB (Cloudinary ceiling)
 
 export const multerUpload = multer({
   storage,
@@ -86,7 +86,7 @@ export const validateMagicBytes = async (
     }
 
     if (isVideo && req.file.size > MAX_VIDEO_SIZE) {
-      sendError(res, 'Video exceeds maximum allowable size of 50MB', 'VIDEO_TOO_LARGE', 400);
+      sendError(res, 'Video exceeds maximum allowable size of 100MB', 'VIDEO_TOO_LARGE', 400);
       return;
     }
 

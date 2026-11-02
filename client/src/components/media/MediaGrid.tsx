@@ -28,6 +28,7 @@ export interface PendingUploadItem {
   caption: string;
   mediaType: MediaType;
   status: 'uploading' | 'error';
+  progress?: number;
   errorMessage?: string;
   onRetry?: () => void;
   onDismiss?: () => void;
@@ -215,8 +216,19 @@ export function MediaGrid({
                       <Upload className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-accent absolute" />
                     </div>
                     <span className="text-[10px] sm:text-xs font-bold text-white tracking-tight drop-shadow-xs">
-                      Uploading {pending.mediaType === 'video' ? 'Video' : 'Image'}...
+                      Uploading {pending.mediaType === 'video' ? 'Video' : 'Photo'}
+                      {typeof pending.progress === 'number' && pending.progress > 0
+                        ? ` (${pending.progress}%)`
+                        : '...'}
                     </span>
+                    {typeof pending.progress === 'number' && (
+                      <div className="w-20 sm:w-28 bg-white/20 rounded-full h-1.5 overflow-hidden">
+                        <div
+                          className="bg-accent h-full transition-all duration-300 rounded-full"
+                          style={{ width: `${Math.max(pending.progress, 5)}%` }}
+                        />
+                      </div>
+                    )}
                     <span className="text-[9px] sm:text-[10px] text-white/70 truncate max-w-[110px] sm:max-w-[140px]">
                       {pending.file.name}
                     </span>

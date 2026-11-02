@@ -61,6 +61,22 @@ export const updateMediaSchema = z.object({
   caption: z.string().trim().max(300).nullable().optional(),
 });
 
+export const signatureQuerySchema = z.object({
+  media_type: z.enum(['image', 'video']).default('image'),
+});
+
+export const confirmMediaSchema = z.object({
+  cloudinary_public_id: z.string().min(1, 'Cloudinary public ID is required'),
+  url: z.string().url('Valid URL is required'),
+  thumbnail_url: z.string().url().optional().nullable(),
+  media_type: z.enum(['image', 'video']),
+  mime_type: z.string().min(1, 'MIME type is required'),
+  size_bytes: z.coerce.number().int().positive('Size must be positive'),
+  caption: z.string().trim().max(300).optional().nullable(),
+  journal_entry_id: z.string().uuid().optional().nullable(),
+  taken_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD').optional().nullable(),
+});
+
 export const createJournalTaskSchema = z.object({
   title: z.string().trim().min(1, 'Task title is required').max(255),
 });
